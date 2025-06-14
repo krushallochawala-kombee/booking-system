@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { format } from 'date-fns';
 
-export const BookingConfirmationInputSchema = z.object({
+const BookingConfirmationInputSchema = z.object({
   listingName: z.string().describe('The name of the service, product, or appointment booked.'),
   listingCategory: z.enum(['Service', 'Product', 'Appointment']).describe('The category of the listing.'),
   userName: z.string().describe("The name of the user who made the booking."),
@@ -21,7 +21,7 @@ export const BookingConfirmationInputSchema = z.object({
 });
 export type BookingConfirmationInput = z.infer<typeof BookingConfirmationInputSchema>;
 
-export const BookingConfirmationOutputSchema = z.object({
+const BookingConfirmationOutputSchema = z.object({
   emailSubject: z.string().describe('The subject line for the confirmation email.'),
   emailBody: z.string().describe('The full body content of the confirmation email. Should be friendly, well-formatted, and confirm all booking details.'),
 });
