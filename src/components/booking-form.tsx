@@ -1,8 +1,9 @@
+
 'use client';
 
 import type React from 'react';
-import { useEffect, useState } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useState, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import type { Listing } from '@/types';
 import { createBookingAction, getBookedDatesForListingAction } from '@/app/actions';
@@ -39,7 +40,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ listing }) => {
   const [bookedDates, setBookedDates] = useState<Date[]>([]);
   
   const initialState = { success: false, message: '' };
-  const [state, formAction] = useFormState(createBookingAction, initialState);
+  const [state, formAction] = useActionState(createBookingAction, initialState);
 
   useEffect(() => {
     if (state.success && state.message) {
