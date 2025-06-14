@@ -16,21 +16,30 @@ export async function createBookingAction(formData: FormData): Promise<{ success
     const listingName = formData.get('listingName') as string;
     const userName = formData.get('userName') as string;
     const userEmail = formData.get('userEmail') as string;
-    const bookingDateString = formData.get('bookingDate') as string; // ISO string like "2024-07-27"
+    const bookingDateString = formData.get('bookingDate') as string | null; // Can be null if not provided
     const bookingTime = formData.get('bookingTime') as string | undefined;
     // const notes = formData.get('notes') as string | undefined; // We'll use this later
 
-    if (!listingId || !listingName || !userName || !userEmail || !bookingDateString) {
-      return { success: false, message: 'Missing required fields.' };
+    // More specific validation checks
+    if (!listingId || !listingName) {
+      return { success: false, message: 'Listing information is missing. Please refresh and try again.' };
+    }
+    if (!userName) {
+      return { success: false, message: 'Your name is required to make a booking.' };
+    }
+    if (!userEmail) {
+      return { success: false, message: 'Your email address is required.' };
+    }
+    if (!/\S+@\S+\.\S+/.test(userEmail)) {
+        return { success: false, message: 'Please enter a valid email address.' };
+    }
+    if (!bookingDateString) {
+      return { success: false, message: 'Please select a booking date.' };
     }
     
-    if (!/\S+@\S+\.\S+/.test(userEmail)) {
-        return { success: false, message: 'Invalid email address.' };
-    }
-
     const bookingDateObj = parseISO(bookingDateString);
     if (isNaN(bookingDateObj.getTime())) {
-        return { success: false, message: 'Invalid booking date format.' };
+        return { success: false, message: 'The selected booking date is invalid.' };
     }
 
     const listingDetails = await getListingByIdAction(listingId);
@@ -46,7 +55,7 @@ export async function createBookingAction(formData: FormData): Promise<{ success
       userName,
       userEmail,
       bookingDate: bookingDateString, 
-      bookingTime: bookingTime || undefined,
+      bookingTime: bookingTime && bookingTime !== "" ? bookingTime : undefined,
       status: 'confirmed',
       createdAt: new Date().toISOString(),
     };
@@ -67,8 +76,6 @@ export async function createBookingAction(formData: FormData): Promise<{ success
         bookingTime: newBooking.bookingTime,
       };
       emailConfirmationContent = await generateBookingConfirmationEmail(confirmationInput);
-      // In a real app, you would now send this email using an email service.
-      // For this demo, we'll just return the content.
       console.log('Generated Email Subject:', emailConfirmationContent.emailSubject);
       console.log('Generated Email Body:', emailConfirmationContent.emailBody);
     } catch (emailError) {
@@ -76,7 +83,7 @@ export async function createBookingAction(formData: FormData): Promise<{ success
       // Non-critical error, booking is still made.
     }
 
-    const successMessage = `Booking confirmed successfully for ${listingName}! ${emailConfirmationContent ? 'A confirmation email would be sent.' : 'Could not generate confirmation email content.'}`;
+    const successMessage = `Booking confirmed successfully for ${listingName}! ${emailConfirmationContent ? 'A confirmation email would be sent (check console for content).' : 'Could not generate confirmation email content.'}`;
 
     return { 
       success: true, 
@@ -84,8 +91,7 @@ export async function createBookingAction(formData: FormData): Promise<{ success
       booking: newBooking,
       emailContent: emailConfirmationContent 
     };
-  } catch (error)
- {
+  } catch (error) {
     console.error('Error creating booking:', error);
     return { success: false, message: 'Failed to create booking. Please try again.' };
   }
@@ -133,3 +139,4 @@ export async function getBookedDatesForListingAction(listingId: string): Promise
     .filter(booking => booking.listingId === listingId && booking.status === 'confirmed')
     .map(booking => booking.bookingDate); // Ensure these are 'yyyy-MM-dd'
 }
+
